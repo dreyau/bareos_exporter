@@ -5,6 +5,12 @@
 *.so
 *.dylib
 
+# MySQL connection password file
+pw/
+
+# IDEA configs
+.idea/
+
 # Test binary, build with `go test -c`
 *.test
 
