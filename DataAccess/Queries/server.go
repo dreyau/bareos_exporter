@@ -24,8 +24,6 @@ func (server Server) TotalBytes(db *sql.DB) Types.TotalBytes {
 
 	Error.Check(err)
 
-	totalBytes.Server = server.Name
-
 	return totalBytes
 }
 
@@ -41,8 +39,6 @@ func (server Server) TotalFiles(db *sql.DB) Types.TotalFiles {
 	results.Close()
 
 	Error.Check(err)
-
-	totalFiles.Server = server.Name
 
 	return totalFiles
 }
@@ -66,8 +62,6 @@ func (server Server) LastJob(db *sql.DB, lastFullJob bool) Types.LastJob {
 	results.Close()
 
 	Error.Check(err)
-
-	lastJob.Server = server.Name
 
 	return lastJob
 }

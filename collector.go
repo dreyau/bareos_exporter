@@ -3,7 +3,6 @@ package main
 import (
 	"bareos_exporter/DataAccess/Queries"
 	"bareos_exporter/Error"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -20,21 +19,21 @@ type BareosMetrics struct {
 
 func BareosCollector() *BareosMetrics {
 	return &BareosMetrics{
-		TotalFiles: prometheus.NewDesc("total_files",
-			"Total files saved by server",
-			nil, nil,
+		TotalFiles: prometheus.NewDesc("total_files_saved_for_server",
+			"Total files saved for server during all backups combined",
+			[]string{"hostname"}, nil,
 		),
-		TotalBytes: prometheus.NewDesc("total_bytes",
-			"Total bytes saved by server",
-			nil, nil,
+		TotalBytes: prometheus.NewDesc("total_bytes_saved_for_server",
+			"Total bytes saved for server during all backups combined",
+			[]string{"hostname"}, nil,
 		),
-		LastJob: prometheus.NewDesc("last_job",
-			"Total files saved by server",
-			nil, nil,
+		LastJob: prometheus.NewDesc("last_job_executed_for_server",
+			"Last job that was executed for ",
+			[]string{"hostname"}, nil,
 		),
 		LastFullJob: prometheus.NewDesc("last_full_job",
 			"Total bytes saved by server",
-			nil, nil,
+			[]string{"hostname"}, nil,
 		),
 	}
 }
@@ -65,6 +64,12 @@ func (collector *BareosMetrics) Collect(ch chan<- prometheus.Metric) {
 	for _, server := range servers {
 		serverFiles := server.TotalFiles(db)
 
-		ch <- prometheus.MustNewConstMetric(collector.TotalFiles, prometheus.CounterValue, float64(serverFiles.Files))
+		ch <- prometheus.MustNewConstMetric(collector.TotalFiles, prometheus.CounterValue, float64(serverFiles.Files), server.Name)
+	}
+
+	for _, server := range servers {
+		serverBytes := server.TotalBytes(db)
+
+		ch <- prometheus.MustNewConstMetric(collector.TotalBytes, prometheus.CounterValue, float64(serverBytes.Bytes), server.Name)
 	}
 }

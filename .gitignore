@@ -11,6 +11,9 @@ pw/
 # IDEA configs
 .idea/
 
+# Binary
+bareos_exporter
+
 # Test binary, build with `go test -c`
 *.test
 
