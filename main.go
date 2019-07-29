@@ -1,36 +1,12 @@
 package main
 
 import (
-	"database/sql"
+	"bareos_exporter/DataAccess"
+	"bareos_exporter/DataAccess/Queries"
+	"bareos_exporter/Error"
 	"flag"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"io/ioutil"
-	"strings"
-	"time"
 )
-
-type Job struct {
-	Id   int    `json:"id"`
-	Name string `json:"name"`
-	ScheduleTime string `json:"schedule-time"`
-}
-
-type TotalBytes struct {
-	Bytes int   `json:"bytes"`
-}
-
-type TotalFiles struct {
-	Files int   `json:"files"`
-}
-
-type LastJob struct {
-	Level   int    `json:"level"`
-	JobBytes int `json:"job-bytes"`
-	JobFiles int `json:"job-files"`
-	JobErrors int `json:"job-errors"`
-	JobDate time.Time `json:"job-date"`
-}
 
 var (
 	mysqlUser     = flag.String("u", "root", "Specify bareos mysql user")
@@ -51,92 +27,52 @@ func init() {
 func main() {
 	flag.Parse()
 
-	dat, err := ioutil.ReadFile(*mysqlAuthFile)
-
-	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", *mysqlUser, strings.TrimSpace(string(dat)), *mysqlHostname, *mysqlPort, *mysqlDb)
-
-	db, err := sql.Open("mysql", connection)
-
-	if err != nil {
-		panic(err.Error())
-	}
+	db := DataAccess.New(*mysqlUser, *mysqlHostname, *mysqlPort, *mysqlDb, *mysqlAuthFile)
 
 	defer db.Close()
 
-	results, err := db.Query("SELECT DISTINCT JobId, Name, SchedTime FROM job WHERE SchedTime LIKE '2019-07-24%'")
+	results, err := db.Query("SELECT DISTINCT Name FROM job WHERE SchedTime LIKE '2019-07-22%'")
 
-	if err != nil {
-		panic(err.Error())
-	}
+	Error.Check(err)
 
-	var jobs []Job
+	var servers []Queries.Server
 
 	for results.Next() {
-		var job Job
-		err = results.Scan(&job.Id, &job.Name, &job.ScheduleTime)
+		var server Queries.Server
+		err = results.Scan(&server.Name)
 
-		jobs = append(jobs, job)
+		servers = append(servers, server)
 
-		if err != nil {
-			panic(err.Error())
-		}
+		Error.Check(err)
 	}
 
-	for _, job := range jobs {
+	fmt.Println("--- Files per server ---")
+	for _, server := range servers {
+		files := server.TotalFiles(db)
 
-		jobBytesQuery := fmt.Sprintf("SELECT SUM(JobBytes) FROM job WHERE Name='%s'", job.Name)
-		jobFilesQuery := fmt.Sprintf("SELECT SUM(JobFiles) FROM job WHERE Name='%s'", job.Name)
-		lastJobQuery := fmt.Sprintf("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE '%s' ORDER BY StartTime DESC LIMIT 1", job.Name)
-		lastFullJobQuery := fmt.Sprintf("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE '%s' AND Level = 'F' ORDER BY StartTime DESC LIMIT 1", job.Name)
+		fmt.Printf("%s: %d files\n", server.Name, files.Files)
+	}
 
-		jobBytesResults, jobBytesErr := db.Query(jobBytesQuery)
-		jobFilesResults, jobFilesErr := db.Query(jobFilesQuery)
-		lastJobResults, lastJobErr := db.Query(lastJobQuery)
-		lastFullJobResults, lastFullJobErr := db.Query(lastFullJobQuery)
+	fmt.Println("--- Bytes per server ---")
+	for _, server := range servers {
+		bytes := server.TotalBytes(db)
 
-		if jobBytesErr != nil {
-			panic(jobBytesErr.Error())
-		}
-		if jobFilesErr != nil {
-			panic(jobFilesErr.Error())
-		}
-		if lastJobErr != nil {
-			panic(lastJobErr.Error())
-		}
-		if lastFullJobErr != nil {
-			panic(lastFullJobErr.Error())
-		}
+		fmt.Printf("%s: %d bytes\n", server.Name, bytes.Bytes)
+	}
 
-		for jobBytesResults.Next() {
-			var totalBytes TotalBytes
+	fmt.Println("--- LastJobs ---")
+	for _, server := range servers {
 
-			err = results.Scan(&totalBytes.Bytes)
+		lastJob := server.LastJob(db, false)
 
-			fmt.Printf("%d bytes saved for server %s\n", totalBytes.Bytes, job.Name)
-		}
+		fmt.Printf("%s, %d, %d, %d, %s\n", lastJob.Level, lastJob.JobBytes, lastJob.JobFiles, lastJob.JobErrors, lastJob.JobDate)
+	}
 
-		for jobFilesResults.Next() {
-			var totalFiles TotalFiles
+	fmt.Println("--- LastFullJobs ---")
+	for _, server := range servers {
 
-			err = results.Scan(&totalFiles.Files)
+		lastJob := server.LastJob(db, true)
 
-			fmt.Printf("%d files saved for server %s\n", totalFiles.Files, job.Name)
-		}
-
-		for lastJobResults.Next() {
-			var lastJob LastJob
-
-			err = results.Scan(&lastJob.Level, &lastJob.JobBytes, &lastJob.JobFiles, &lastJob.JobErrors, &lastJob.JobDate)
-
-			fmt.Printf("Level %d, %d bytes, %d files, %d errors started on %s for server %s\n", lastJob.Level, lastJob.JobBytes, lastJob.JobFiles, lastJob.JobErrors, lastJob.JobDate, job.Name)
-		}
-
-		for lastFullJobResults.Next() {
-			var lastJob LastJob
-
-			err = results.Scan(&lastJob.Level, &lastJob.JobBytes, &lastJob.JobFiles, &lastJob.JobErrors, &lastJob.JobDate)
-
-			fmt.Printf("Level %d, %d bytes, %d files, %d errors started on %s for server %s\n", lastJob.Level, lastJob.JobBytes, lastJob.JobFiles, lastJob.JobErrors, lastJob.JobDate, job.Name)
-		}
+		fmt.Printf("%s, %d, %d, %d, %s\n", lastJob.Level, lastJob.JobBytes, lastJob.JobFiles, lastJob.JobErrors, lastJob.JobDate)
 	}
 }
