@@ -2,11 +2,17 @@ package main
 
 import (
 	"bareos_exporter/DataAccess"
-	"bareos_exporter/DataAccess/Queries"
-	"bareos_exporter/Error"
+	"database/sql"
 	"flag"
 	"fmt"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"net/http"
 )
+
+var db *sql.DB
 
 var (
 	mysqlUser     = flag.String("u", "root", "Specify bareos mysql user")
@@ -27,52 +33,16 @@ func init() {
 func main() {
 	flag.Parse()
 
-	db := DataAccess.New(*mysqlUser, *mysqlHostname, *mysqlPort, *mysqlDb, *mysqlAuthFile)
+	db = DataAccess.New(*mysqlUser, *mysqlHostname, *mysqlPort, *mysqlDb, *mysqlAuthFile)
 
 	defer db.Close()
 
-	results, err := db.Query("SELECT DISTINCT Name FROM job WHERE SchedTime LIKE '2019-07-22%'")
+	foo := BareosCollector()
+	prometheus.MustRegister(foo)
 
-	Error.Check(err)
-
-	var servers []Queries.Server
-
-	for results.Next() {
-		var server Queries.Server
-		err = results.Scan(&server.Name)
-
-		servers = append(servers, server)
-
-		Error.Check(err)
-	}
-
-	fmt.Println("--- Files per server ---")
-	for _, server := range servers {
-		files := server.TotalFiles(db)
-
-		fmt.Printf("%s: %d files\n", server.Name, files.Files)
-	}
-
-	fmt.Println("--- Bytes per server ---")
-	for _, server := range servers {
-		bytes := server.TotalBytes(db)
-
-		fmt.Printf("%s: %d bytes\n", server.Name, bytes.Bytes)
-	}
-
-	fmt.Println("--- LastJobs ---")
-	for _, server := range servers {
-
-		lastJob := server.LastJob(db, false)
-
-		fmt.Printf("%s, %d, %d, %d, %s\n", lastJob.Level, lastJob.JobBytes, lastJob.JobFiles, lastJob.JobErrors, lastJob.JobDate)
-	}
-
-	fmt.Println("--- LastFullJobs ---")
-	for _, server := range servers {
-
-		lastJob := server.LastJob(db, true)
-
-		fmt.Printf("%s, %d, %d, %d, %s\n", lastJob.Level, lastJob.JobBytes, lastJob.JobFiles, lastJob.JobErrors, lastJob.JobDate)
-	}
+	//This section will start the HTTP server and expose
+	//any metrics on the /metrics endpoint.
+	http.Handle("/metrics", promhttp.Handler())
+	log.Info("Beginning to serve on port :8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
