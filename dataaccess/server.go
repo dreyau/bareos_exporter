@@ -1,47 +1,53 @@
-package Queries
+package dataaccess
 
 import (
-	"bareos_exporter/Error"
-	"bareos_exporter/Types"
+	"bareos_exporter/types"
 	"database/sql"
 	"fmt"
+	"log"
 )
 
 type Server struct {
 	Name string `json:"name"`
 }
 
-func (server Server) TotalBytes(db *sql.DB) Types.TotalBytes {
+func (server Server) TotalBytes(db *sql.DB) (*types.TotalBytes, error) {
 	query := fmt.Sprintf("SELECT SUM(JobBytes) FROM job WHERE Name='%s'", server.Name)
 	results, err := db.Query(query)
-	Error.Check(err)
 
-	var totalBytes Types.TotalBytes
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	var totalBytes types.TotalBytes
 	if results.Next() {
 		err = results.Scan(&totalBytes.Bytes)
 		results.Close()
-		Error.Check(err)
 	}
 
-	return totalBytes
+	return &totalBytes, err
 }
 
-func (server Server) TotalFiles(db *sql.DB) Types.TotalFiles {
+func (server Server) TotalFiles(db *sql.DB) (*types.TotalFiles, error) {
 	query := fmt.Sprintf("SELECT SUM(JobFiles) FROM job WHERE Name='%s'", server.Name)
 	results, err := db.Query(query)
-	Error.Check(err)
 
-	var totalFiles Types.TotalFiles
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	var totalFiles types.TotalFiles
 	if results.Next() {
 		err = results.Scan(&totalFiles.Files)
 		results.Close()
-		Error.Check(err)
 	}
 
-	return totalFiles
+	return &totalFiles, err
 }
 
-func (server Server) LastJob(db *sql.DB, lastFullJob bool) Types.LastJob {
+func (server Server) LastJob(db *sql.DB, lastFullJob bool) (*types.LastJob, error) {
 	var query string
 
 	if lastFullJob {
@@ -51,14 +57,17 @@ func (server Server) LastJob(db *sql.DB, lastFullJob bool) Types.LastJob {
 	}
 
 	results, err := db.Query(query)
-	Error.Check(err)
 
-	var lastJob Types.LastJob
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	var lastJob types.LastJob
 	if results.Next() {
 		err = results.Scan(&lastJob.Level, &lastJob.JobBytes, &lastJob.JobFiles, &lastJob.JobErrors, &lastJob.JobDate)
-		Error.Check(err)
 		results.Close()
 	}
 
-	return lastJob
+	return &lastJob, err
 }

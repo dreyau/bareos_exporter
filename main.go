@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bareos_exporter/DataAccess"
+	"bareos_exporter/dataaccess"
 	"database/sql"
 	"flag"
 	"fmt"
@@ -33,7 +33,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	db = DataAccess.New(*mysqlUser, *mysqlHostname, *mysqlPort, *mysqlDb, *mysqlAuthFile)
+	db = dataaccess.New(*mysqlUser, *mysqlHostname, *mysqlPort, *mysqlDb, *mysqlAuthFile)
 
 	defer db.Close()
 

@@ -1,7 +1,7 @@
-package DataAccess
+package dataaccess
 
 import (
-	"bareos_exporter/Error"
+	"bareos_exporter/error"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -12,11 +12,11 @@ import (
 
 func New(mysqlUser string, mysqlHostname string, mysqlPort string, mysqlDb string, mysqlAuthFile string) *sql.DB{
 	pass, err := ioutil.ReadFile(mysqlAuthFile)
-	Error.Check(err)
+	error.Check(err)
 
 	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", mysqlUser, strings.TrimSpace(string(pass)), mysqlHostname, mysqlPort, mysqlDb)
 	db, err := sql.Open("mysql", connection)
-	Error.Check(err)
+	error.Check(err)
 
 	return db
 }

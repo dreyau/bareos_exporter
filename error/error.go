@@ -1,4 +1,4 @@
-package Error
+package error
 
 func Check(err error){
 	if err != nil {

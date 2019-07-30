@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bareos_exporter/DataAccess/Queries"
-	"bareos_exporter/Error"
+	"bareos_exporter/dataaccess"
 	"github.com/prometheus/client_golang/prometheus"
+	"log"
 )
 
 //Define a struct for you collector that contains pointers
@@ -26,23 +26,23 @@ type BareosMetrics struct {
 
 func BareosCollector() *BareosMetrics {
 	return &BareosMetrics{
-		TotalFiles: prometheus.NewDesc("total_files_saved_for_hostname",
+		TotalFiles: prometheus.NewDesc("files_saved_for_hostname_total",
 			"Total files saved for server during all backups combined",
 			[]string{"hostname"}, nil,
 		),
-		TotalBytes: prometheus.NewDesc("total_bytes_saved_for_hostname",
+		TotalBytes: prometheus.NewDesc("bytes_saved_for_hostname_total",
 			"Total bytes saved for server during all backups combined",
 			[]string{"hostname"}, nil,
 		),
-		LastJobBytes: prometheus.NewDesc("last_backup_job_bytes_saved_for_hostname",
+		LastJobBytes: prometheus.NewDesc("last_backup_job_bytes_saved_for_hostname_total",
 			"Last job that was executed for ",
 			[]string{"hostname"}, nil,
 		),
-		LastJobFiles: prometheus.NewDesc("last_backup_job_files_saved_for_hostname",
+		LastJobFiles: prometheus.NewDesc("last_backup_job_files_saved_for_hostname_total",
 			"Last job that was executed for ",
 			[]string{"hostname"}, nil,
 		),
-		LastJobErrors: prometheus.NewDesc("last_backup_job_errors_occurred_while_saving_for_hostname",
+		LastJobErrors: prometheus.NewDesc("last_backup_job_errors_occurred_while_saving_for_hostname_total",
 			"Last job that was executed for ",
 			[]string{"hostname"}, nil,
 		),
@@ -50,15 +50,15 @@ func BareosCollector() *BareosMetrics {
 			"Last job that was executed for ",
 			[]string{"hostname"}, nil,
 		),
-		LastFullJobBytes: prometheus.NewDesc("last_full_backup_job_bytes_saved_for_hostname",
+		LastFullJobBytes: prometheus.NewDesc("last_full_backup_job_bytes_saved_for_hostname_total",
 			"Total bytes saved by server",
 			[]string{"hostname"}, nil,
 		),
-		LastFullJobFiles: prometheus.NewDesc("last_full_backup_job_files_saved_for_hostname",
+		LastFullJobFiles: prometheus.NewDesc("last_full_backup_job_files_saved_for_hostname_total",
 			"Total bytes saved by server",
 			[]string{"hostname"}, nil,
 		),
-		LastFullJobErrors: prometheus.NewDesc("last_full_backup_job_errors_occurred_while_saving_for_hostname",
+		LastFullJobErrors: prometheus.NewDesc("last_full_backup_job_errors_occurred_while_saving_for_hostname_total",
 			"Total bytes saved by server",
 			[]string{"hostname"}, nil,
 		),
@@ -85,23 +85,39 @@ func (collector *BareosMetrics) Describe(ch chan<- *prometheus.Desc) {
 func (collector *BareosMetrics) Collect(ch chan<- prometheus.Metric) {
 	results, err := db.Query("SELECT DISTINCT Name FROM job WHERE SchedTime LIKE '2019-07-24%'")
 
-	Error.Check(err)
+	if err != nil{
+		log.Fatal(err)
+	}
 
-	var servers []Queries.Server
+	var servers []dataaccess.Server
 
 	for results.Next() {
-		var server Queries.Server
+		var server dataaccess.Server
 		err = results.Scan(&server.Name)
 
 		servers = append(servers, server)
-
-		Error.Check(err)
 	}
 
 	for _, server := range servers {
-		serverFiles := server.TotalFiles(db)
-		serverBytes := server.TotalBytes(db)
-		lastServerJob := server.LastJob(db, false)
+		serverFiles, filesErr := server.TotalFiles(db)
+		serverBytes, bytesErr := server.TotalBytes(db)
+		lastServerJob, jobErr := server.LastJob(db, false)
+
+		if filesErr != nil || bytesErr != nil || jobErr != nil{
+			log.Fatal(server.Name)
+		}
+
+		if filesErr != nil {
+			log.Fatal(filesErr)
+		}
+
+		if bytesErr != nil {
+			log.Fatal(bytesErr)
+		}
+
+		if jobErr != nil {
+			log.Fatal(jobErr)
+		}
 
 		ch <- prometheus.MustNewConstMetric(collector.TotalFiles, prometheus.CounterValue, float64(serverFiles.Files), server.Name)
 		ch <- prometheus.MustNewConstMetric(collector.TotalBytes, prometheus.CounterValue, float64(serverBytes.Bytes), server.Name)
@@ -113,7 +129,12 @@ func (collector *BareosMetrics) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	for _, server := range servers {
-		lastFullServerJob := server.LastJob(db, true)
+		lastFullServerJob, lastJobErr := server.LastJob(db, true)
+
+		if lastJobErr != nil {
+			log.Fatal(server.Name)
+			log.Fatal(lastJobErr)
+		}
 
 		ch <- prometheus.MustNewConstMetric(collector.LastFullJobBytes, prometheus.CounterValue, float64(lastFullServerJob.JobBytes), server.Name)
 		ch <- prometheus.MustNewConstMetric(collector.LastFullJobFiles, prometheus.CounterValue, float64(lastFullServerJob.JobFiles), server.Name)
