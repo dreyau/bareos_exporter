@@ -2,17 +2,23 @@ package main
 
 import (
 	"bareos_exporter/dataaccess"
+	"bareos_exporter/error"
+
 	"database/sql"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
-var db *sql.DB
+var connection dataaccess.Connection
 
 var (
 	mysqlUser     = flag.String("u", "root", "Specify bareos mysql user")
@@ -33,12 +39,19 @@ func init() {
 func main() {
 	flag.Parse()
 
-	db = dataaccess.New(*mysqlUser, *mysqlHostname, *mysqlPort, *mysqlDb, *mysqlAuthFile)
+	pass, err := ioutil.ReadFile(*mysqlAuthFile)
+	error.Check(err)
 
-	defer db.Close()
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", *mysqlUser, strings.TrimSpace(string(pass)), *mysqlHostname, *mysqlPort, *mysqlDb)
+	db, err := sql.Open("mysql", connectionString)
+	error.Check(err)
 
-	foo := BareosCollector()
-	prometheus.MustRegister(foo)
+	connection.DB = db
+
+	defer connection.DB.Close()
+
+	collector := BareosCollector()
+	prometheus.MustRegister(collector)
 
 	http.Handle("/metrics", promhttp.Handler())
 	log.Info("Beginning to serve on port :8080")
