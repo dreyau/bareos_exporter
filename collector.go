@@ -85,28 +85,34 @@ func (collector *BareosMetrics) Collect(ch chan<- prometheus.Metric) {
 	var servers, getServerListErr = connection.GetServerList()
 
 	if getServerListErr != nil {
-		log.Fatal(getServerListErr)
+		log.Println(getServerListErr)
+		return
 	}
 
 	for _, server := range servers {
 		serverFiles, filesErr := connection.TotalFiles(server)
 		serverBytes, bytesErr := connection.TotalBytes(server)
-		lastServerJob, jobErr := connection.LastJob(server, false)
+		lastServerJob, jobErr := connection.LastJob(server)
+		lastFullServerJob, fullJobErr := connection.LastJob(server)
 
-		if filesErr != nil || bytesErr != nil || jobErr != nil{
+		if filesErr != nil || bytesErr != nil || jobErr != nil || fullJobErr != nil{
 			log.Fatal(server)
 		}
 
 		if filesErr != nil {
-			log.Fatal(filesErr)
+			log.Println(filesErr)
 		}
 
 		if bytesErr != nil {
-			log.Fatal(bytesErr)
+			log.Println(bytesErr)
 		}
 
 		if jobErr != nil {
-			log.Fatal(jobErr)
+			log.Println(jobErr)
+		}
+
+		if fullJobErr != nil {
+			log.Println(fullJobErr)
 		}
 
 		ch <- prometheus.MustNewConstMetric(collector.TotalFiles, prometheus.CounterValue, float64(serverFiles.Files), server)
@@ -116,15 +122,6 @@ func (collector *BareosMetrics) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(collector.LastJobFiles, prometheus.CounterValue, float64(lastServerJob.JobFiles), server)
 		ch <- prometheus.MustNewConstMetric(collector.LastJobErrors, prometheus.CounterValue, float64(lastServerJob.JobErrors), server)
 		ch <- prometheus.MustNewConstMetric(collector.LastJobTimestamp, prometheus.CounterValue, float64(lastServerJob.JobDate.Unix()), server)
-	}
-
-	for _, server := range servers {
-		lastFullServerJob, lastJobErr := connection.LastJob(server, true)
-
-		if lastJobErr != nil {
-			log.Fatal(server)
-			log.Fatal(lastJobErr)
-		}
 
 		ch <- prometheus.MustNewConstMetric(collector.LastFullJobBytes, prometheus.CounterValue, float64(lastFullServerJob.JobBytes), server)
 		ch <- prometheus.MustNewConstMetric(collector.LastFullJobFiles, prometheus.CounterValue, float64(lastFullServerJob.JobFiles), server)

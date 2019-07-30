@@ -21,11 +21,11 @@ import (
 var connection dataaccess.Connection
 
 var (
-	mysqlUser     = flag.String("u", "root", "Specify bareos mysql user")
-	mysqlAuthFile = flag.String("p", "./auth", "Specify bareos mysql password file path")
-	mysqlHostname = flag.String("h", "127.0.0.1", "Specify bareos mysql hostname")
-	mysqlPort     = flag.String("P", "3306", "Specify bareos mysql port")
-	mysqlDb       = flag.String("db", "bareos", "Specify bareos mysql database name")
+	mysqlUser     = flag.String("u", "root", "Bareos MySQL username")
+	mysqlAuthFile = flag.String("p", "./auth", "MySQL password file path")
+	mysqlHostname = flag.String("h", "127.0.0.1", "MySQL hostname")
+	mysqlPort     = flag.String("P", "3306", "MySQL port")
+	mysqlDb       = flag.String("db", "bareos", "MySQL database name")
 )
 
 func init() {

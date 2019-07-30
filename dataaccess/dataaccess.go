@@ -66,14 +66,27 @@ func (connection Connection) TotalFiles(name string) (*types.TotalFiles, error) 
 	return &totalFiles, err
 }
 
-func (connection Connection) LastJob(name string, lastFullJob bool) (*types.LastJob, error) {
-	var query string
+func (connection Connection) LastJob(name string) (*types.LastJob, error) {
+	query := fmt.Sprintf("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE '%s' ORDER BY StartTime DESC LIMIT 1", name)
 
-	if lastFullJob {
-		query = fmt.Sprintf("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE '%s' AND Level = 'F' ORDER BY StartTime DESC LIMIT 1", name)
-	} else {
-		query = fmt.Sprintf("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE '%s' ORDER BY StartTime DESC LIMIT 1", name)
+	results, err := connection.DB.Query(query)
+
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
 	}
+
+	var lastJob types.LastJob
+	if results.Next() {
+		err = results.Scan(&lastJob.Level, &lastJob.JobBytes, &lastJob.JobFiles, &lastJob.JobErrors, &lastJob.JobDate)
+		results.Close()
+	}
+
+	return &lastJob, err
+}
+
+func (connection Connection) LastFullJob(name string) (*types.LastJob, error) {
+	query := fmt.Sprintf("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE '%s' AND Level = 'F' ORDER BY StartTime DESC LIMIT 1", name)
 
 	results, err := connection.DB.Query(query)
 
