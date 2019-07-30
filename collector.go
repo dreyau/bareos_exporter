@@ -86,6 +86,8 @@ func (collector *BareosMetrics) Collect(ch chan<- prometheus.Metric) {
 
 	if getServerListErr != nil {
 		log.Println(getServerListErr)
+		
+		// Prevent from collecting on connection error
 		return
 	}
 
@@ -96,7 +98,7 @@ func (collector *BareosMetrics) Collect(ch chan<- prometheus.Metric) {
 		lastFullServerJob, fullJobErr := connection.LastJob(server)
 
 		if filesErr != nil || bytesErr != nil || jobErr != nil || fullJobErr != nil{
-			log.Fatal(server)
+			log.Println(server)
 		}
 
 		if filesErr != nil {
