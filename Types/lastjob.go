@@ -1,9 +1,11 @@
 package Types
 
+import "time"
+
 type LastJob struct {
 	Level   string  `json:"level"`
 	JobBytes int `json:"job-bytes"`
 	JobFiles int `json:"job-files"`
 	JobErrors int `json:"job-errors"`
-	JobDate string `json:"job-date"`
+	JobDate time.Time `json:"job-date"`
 }
