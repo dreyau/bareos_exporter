@@ -4,21 +4,18 @@ import (
 	"bareos_exporter/dataaccess"
 	"bareos_exporter/error"
 
-	"database/sql"
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"net/http"
-
-	_ "github.com/go-sql-driver/mysql"
+	log "github.com/sirupsen/logrus"
 )
 
-var connection dataaccess.Connection
+var connectionString string
 
 var (
 	mysqlUser     = flag.String("u", "root", "Bareos MySQL username")
@@ -42,13 +39,13 @@ func main() {
 	pass, err := ioutil.ReadFile(*mysqlAuthFile)
 	error.Check(err)
 
-	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", *mysqlUser, strings.TrimSpace(string(pass)), *mysqlHostname, *mysqlPort, *mysqlDb)
-	db, err := sql.Open("mysql", connectionString)
+	connectionString = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", *mysqlUser, strings.TrimSpace(string(pass)), *mysqlHostname, *mysqlPort, *mysqlDb)
+
+	// Check whether a functioning connection can be established
+	connection, err := dataaccess.GetConnection(connectionString)
 	error.Check(err)
-
-	connection.DB = db
-
-	defer connection.DB.Close()
+	connection.DB.Close()
+	log.Info("MySQL login successful")
 
 	collector := BareosCollector()
 	prometheus.MustRegister(collector)

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bareos_exporter/dataaccess"
 	"github.com/prometheus/client_golang/prometheus"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 )
 
 //Define a struct for you collector that contains pointers
@@ -82,12 +84,19 @@ func (collector *BareosMetrics) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (collector *BareosMetrics) Collect(ch chan<- prometheus.Metric) {
+	connection, connectionErr := dataaccess.GetConnection(connectionString)
+
+	defer connection.DB.Close()
+
+	if connectionErr != nil {
+		log.Error(connectionErr)
+		return
+	}
+
 	var servers, getServerListErr = connection.GetServerList()
 
 	if getServerListErr != nil {
-		log.Println(getServerListErr)
-		
-		// Prevent from collecting on connection error
+		log.Error(getServerListErr)
 		return
 	}
 
@@ -98,23 +107,23 @@ func (collector *BareosMetrics) Collect(ch chan<- prometheus.Metric) {
 		lastFullServerJob, fullJobErr := connection.LastJob(server)
 
 		if filesErr != nil || bytesErr != nil || jobErr != nil || fullJobErr != nil{
-			log.Println(server)
+			log.Info(server)
 		}
 
 		if filesErr != nil {
-			log.Println(filesErr)
+			log.Error(filesErr)
 		}
 
 		if bytesErr != nil {
-			log.Println(bytesErr)
+			log.Error(bytesErr)
 		}
 
 		if jobErr != nil {
-			log.Println(jobErr)
+			log.Error(jobErr)
 		}
 
 		if fullJobErr != nil {
-			log.Println(fullJobErr)
+			log.Error(fullJobErr)
 		}
 
 		ch <- prometheus.MustNewConstMetric(collector.TotalFiles, prometheus.CounterValue, float64(serverFiles.Files), server)

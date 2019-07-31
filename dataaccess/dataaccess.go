@@ -4,18 +4,27 @@ import (
 	"bareos_exporter/types"
 	"database/sql"
 	"fmt"
-	"log"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type Connection struct {
 	DB *sql.DB
 }
 
+func GetConnection(connectionString string) (Connection, error) {
+	var connection Connection
+	var err error
+
+	connection.DB, err = sql.Open("mysql", connectionString)
+
+	return connection, err
+}
+
 func (connection Connection) GetServerList() ([]string, error) {
 	results, err := connection.DB.Query("SELECT DISTINCT Name FROM job WHERE SchedTime LIKE '2019-07-24%'")
 
 	if err != nil{
-		log.Fatal(err)
 		return nil, err
 	}
 
@@ -35,7 +44,6 @@ func (connection Connection) TotalBytes(name string) (*types.TotalBytes, error) 
 	results, err := connection.DB.Query(query)
 
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
@@ -53,7 +61,6 @@ func (connection Connection) TotalFiles(name string) (*types.TotalFiles, error) 
 	results, err := connection.DB.Query(query)
 
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
@@ -72,7 +79,6 @@ func (connection Connection) LastJob(name string) (*types.LastJob, error) {
 	results, err := connection.DB.Query(query)
 
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
@@ -91,7 +97,6 @@ func (connection Connection) LastFullJob(name string) (*types.LastJob, error) {
 	results, err := connection.DB.Query(query)
 
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
