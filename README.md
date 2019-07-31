@@ -1,3 +1,7 @@
+## bareos_exporter
+
+Prometheus exporter for [bareos](https://github.com/bareos) backup job metrics
+
 ### Flags
 
 Name    | Description
