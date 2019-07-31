@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bareos_exporter/dataaccess"
-	"bareos_exporter/error"
+	"github.com/dreyau/bareos_exporter/dataaccess"
+	"github.com/dreyau/bareos_exporter/error"
 
 	"flag"
 	"fmt"

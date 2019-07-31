@@ -1,10 +1,10 @@
 package dataaccess
 
 import (
-	"bareos_exporter/types"
 	"database/sql"
 	"fmt"
 
+	"github.com/dreyau/bareos_exporter/types"
 	_ "github.com/go-sql-driver/mysql"
 )
 
