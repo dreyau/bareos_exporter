@@ -12,16 +12,16 @@ import (
 //Note you can also include fields of other types if they provide utility
 //but we just won't be exposing them as metrics.
 type BareosMetrics struct {
-	TotalFiles *prometheus.Desc
-	TotalBytes *prometheus.Desc
-	LastJobBytes *prometheus.Desc
-	LastJobFiles *prometheus.Desc
-	LastJobErrors *prometheus.Desc
+	TotalFiles       *prometheus.Desc
+	TotalBytes       *prometheus.Desc
+	LastJobBytes     *prometheus.Desc
+	LastJobFiles     *prometheus.Desc
+	LastJobErrors    *prometheus.Desc
 	LastJobTimestamp *prometheus.Desc
 
-	LastFullJobBytes *prometheus.Desc
-	LastFullJobFiles *prometheus.Desc
-	LastFullJobErrors *prometheus.Desc
+	LastFullJobBytes     *prometheus.Desc
+	LastFullJobFiles     *prometheus.Desc
+	LastFullJobErrors    *prometheus.Desc
 	LastFullJobTimestamp *prometheus.Desc
 }
 
@@ -106,7 +106,7 @@ func (collector *BareosMetrics) Collect(ch chan<- prometheus.Metric) {
 		lastServerJob, jobErr := connection.LastJob(server)
 		lastFullServerJob, fullJobErr := connection.LastJob(server)
 
-		if filesErr != nil || bytesErr != nil || jobErr != nil || fullJobErr != nil{
+		if filesErr != nil || bytesErr != nil || jobErr != nil || fullJobErr != nil {
 			log.Info(server)
 		}
 

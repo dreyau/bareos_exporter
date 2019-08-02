@@ -24,7 +24,7 @@ func GetConnection(connectionString string) (*Connection, error) {
 func (connection Connection) GetServerList() ([]string, error) {
 	results, err := connection.DB.Query("SELECT DISTINCT Name FROM job WHERE SchedTime LIKE '2019-07-24%'")
 
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 

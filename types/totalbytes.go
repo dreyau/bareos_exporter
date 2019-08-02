@@ -1,5 +1,5 @@
 package types
 
 type TotalFiles struct {
-	Files int   `json:"files"`
+	Files int `json:"files"`
 }
