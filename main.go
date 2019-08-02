@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/dreyau/bareos_exporter/dataaccess"
 	"github.com/dreyau/bareos_exporter/error"
 
 	"flag"
@@ -40,12 +39,6 @@ func main() {
 	error.Check(err)
 
 	connectionString = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", *mysqlUser, strings.TrimSpace(string(pass)), *mysqlHostname, *mysqlPort, *mysqlDb)
-
-	// Check whether a functioning connection can be established
-	connection, err := dataaccess.GetConnection(connectionString)
-	error.Check(err)
-	connection.DB.Close()
-	log.Info("MySQL login successful")
 
 	collector := BareosCollector()
 	prometheus.MustRegister(collector)

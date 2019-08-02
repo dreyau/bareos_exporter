@@ -12,13 +12,13 @@ type Connection struct {
 	DB *sql.DB
 }
 
-func GetConnection(connectionString string) (Connection, error) {
+func GetConnection(connectionString string) (*Connection, error) {
 	var connection Connection
 	var err error
 
 	connection.DB, err = sql.Open("mysql", connectionString)
 
-	return connection, err
+	return &connection, err
 }
 
 func (connection Connection) GetServerList() ([]string, error) {
