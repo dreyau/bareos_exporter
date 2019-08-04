@@ -3,7 +3,7 @@ RUN go get -d -v github.com/dreyau/bareos_exporter
 WORKDIR /go/src/github.com/dreyau/bareos_exporter
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o bareos_exporter .
 
-FROM alpine:latest
+FROM busybox:latest
 
 ENV mysql_port 3306
 ENV mysql_server 192.168.3.70
