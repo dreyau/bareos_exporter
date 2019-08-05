@@ -23,7 +23,7 @@ func GetConnection(connectionString string) (*Connection, error) {
 }
 
 func (connection Connection) GetServerList() ([]string, error) {
-	date := fmt.Sprintf("%s%", time.Now().Format("2006-01-02"))
+	date := fmt.Sprintf("%s%%", time.Now().Format("2006-01-02"))
 	results, err := connection.DB.Query("SELECT DISTINCT Name FROM job WHERE SchedTime LIKE ?", date)
 
 	if err != nil {
