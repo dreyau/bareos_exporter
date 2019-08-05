@@ -7,11 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-//Define a struct for you collector that contains pointers
-//to prometheus descriptors for each metric you wish to expose.
-//Note you can also include fields of other types if they provide utility
-//but we just won't be exposing them as metrics.
-type BareosMetrics struct {
+type bareosMetrics struct {
 	TotalFiles       *prometheus.Desc
 	TotalBytes       *prometheus.Desc
 	LastJobBytes     *prometheus.Desc
@@ -25,52 +21,52 @@ type BareosMetrics struct {
 	LastFullJobTimestamp *prometheus.Desc
 }
 
-func BareosCollector() *BareosMetrics {
-	return &BareosMetrics{
-		TotalFiles: prometheus.NewDesc("files_saved_for_hostname_total",
-			"Total files saved for server during all backups combined",
+func bareosCollector() *bareosMetrics {
+	return &bareosMetrics{
+		TotalFiles: prometheus.NewDesc("bareos_files_saved_total",
+			"Total files saved for server during all backups for hostname combined",
 			[]string{"hostname"}, nil,
 		),
-		TotalBytes: prometheus.NewDesc("bytes_saved_for_hostname_total",
-			"Total bytes saved for server during all backups combined",
+		TotalBytes: prometheus.NewDesc("bareos_bytes_saved_total",
+			"Total bytes saved for server during all backups for hostname combined",
 			[]string{"hostname"}, nil,
 		),
-		LastJobBytes: prometheus.NewDesc("last_backup_job_bytes_saved_for_hostname_total",
-			"Last job that was executed for ",
+		LastJobBytes: prometheus.NewDesc("bareos_last_backup_job_bytes_saved_total",
+			"Total bytes saved during last backup for hostname",
 			[]string{"hostname"}, nil,
 		),
-		LastJobFiles: prometheus.NewDesc("last_backup_job_files_saved_for_hostname_total",
-			"Last job that was executed for ",
+		LastJobFiles: prometheus.NewDesc("bareos_last_backup_job_files_saved_total",
+			"Total files saved during last backup for hostname",
 			[]string{"hostname"}, nil,
 		),
-		LastJobErrors: prometheus.NewDesc("last_backup_job_errors_occurred_while_saving_for_hostname_total",
-			"Last job that was executed for ",
+		LastJobErrors: prometheus.NewDesc("bareos_last_backup_job_errors_occurred_while_saving_total",
+			"Total errors occurred during last backup for hostname",
 			[]string{"hostname"}, nil,
 		),
-		LastJobTimestamp: prometheus.NewDesc("last_backup_job_unix_timestamp_for_hostname",
-			"Last job that was executed for ",
+		LastJobTimestamp: prometheus.NewDesc("bareos_last_backup_job_unix_timestamp",
+			"Execution timestamp of last backup for hostname",
 			[]string{"hostname"}, nil,
 		),
-		LastFullJobBytes: prometheus.NewDesc("last_full_backup_job_bytes_saved_for_hostname_total",
-			"Total bytes saved by server",
+		LastFullJobBytes: prometheus.NewDesc("bareos_last_full_backup_job_bytes_saved_total",
+			"Total bytes saved during last full backup (Level = F) for hostname",
 			[]string{"hostname"}, nil,
 		),
-		LastFullJobFiles: prometheus.NewDesc("last_full_backup_job_files_saved_for_hostname_total",
-			"Total bytes saved by server",
+		LastFullJobFiles: prometheus.NewDesc("bareos_last_full_backup_job_files_saved_total",
+			"Total files saved during last full backup (Level = F) for hostname",
 			[]string{"hostname"}, nil,
 		),
-		LastFullJobErrors: prometheus.NewDesc("last_full_backup_job_errors_occurred_while_saving_for_hostname_total",
-			"Total bytes saved by server",
+		LastFullJobErrors: prometheus.NewDesc("bareos_last_full_backup_job_errors_occurred_while_saving_total",
+			"Total errors occurred during last full backup (Level = F) for hostname",
 			[]string{"hostname"}, nil,
 		),
-		LastFullJobTimestamp: prometheus.NewDesc("last_full_backup_job_unix_timestamp_for_hostname",
-			"Total bytes saved by server",
+		LastFullJobTimestamp: prometheus.NewDesc("bareos_last_full_backup_job_unix_timestamp",
+			"Execution timestamp of last full backup (Level = F) for hostname",
 			[]string{"hostname"}, nil,
 		),
 	}
 }
 
-func (collector *BareosMetrics) Describe(ch chan<- *prometheus.Desc) {
+func (collector *bareosMetrics) Describe(ch chan<- *prometheus.Desc) {
 	ch <- collector.TotalFiles
 	ch <- collector.TotalBytes
 	ch <- collector.LastJobBytes
@@ -83,7 +79,7 @@ func (collector *BareosMetrics) Describe(ch chan<- *prometheus.Desc) {
 	ch <- collector.LastFullJobTimestamp
 }
 
-func (collector *BareosMetrics) Collect(ch chan<- prometheus.Metric) {
+func (collector *bareosMetrics) Collect(ch chan<- prometheus.Metric) {
 	connection, connectionErr := dataaccess.GetConnection(connectionString)
 
 	defer connection.DB.Close()

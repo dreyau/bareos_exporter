@@ -3,6 +3,7 @@ package dataaccess
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/dreyau/bareos_exporter/types"
 	_ "github.com/go-sql-driver/mysql"
@@ -22,7 +23,8 @@ func GetConnection(connectionString string) (*Connection, error) {
 }
 
 func (connection Connection) GetServerList() ([]string, error) {
-	results, err := connection.DB.Query("SELECT DISTINCT Name FROM job WHERE SchedTime LIKE '2019-07-24%'")
+	date := fmt.Sprintf("%s%", time.Now().Format("2006-01-02"))
+	results, err := connection.DB.Query("SELECT DISTINCT Name FROM job WHERE SchedTime LIKE ?", date)
 
 	if err != nil {
 		return nil, err
@@ -39,9 +41,8 @@ func (connection Connection) GetServerList() ([]string, error) {
 	return servers, err
 }
 
-func (connection Connection) TotalBytes(name string) (*types.TotalBytes, error) {
-	query := fmt.Sprintf("SELECT SUM(JobBytes) FROM job WHERE Name='%s'", name)
-	results, err := connection.DB.Query(query)
+func (connection Connection) TotalBytes(server string) (*types.TotalBytes, error) {
+	results, err := connection.DB.Query("SELECT SUM(JobBytes) FROM job WHERE Name=?", server)
 
 	if err != nil {
 		return nil, err
@@ -56,9 +57,8 @@ func (connection Connection) TotalBytes(name string) (*types.TotalBytes, error) 
 	return &totalBytes, err
 }
 
-func (connection Connection) TotalFiles(name string) (*types.TotalFiles, error) {
-	query := fmt.Sprintf("SELECT SUM(JobFiles) FROM job WHERE Name='%s'", name)
-	results, err := connection.DB.Query(query)
+func (connection Connection) TotalFiles(server string) (*types.TotalFiles, error) {
+	results, err := connection.DB.Query("SELECT SUM(JobFiles) FROM job WHERE Name=?", server)
 
 	if err != nil {
 		return nil, err
@@ -73,10 +73,8 @@ func (connection Connection) TotalFiles(name string) (*types.TotalFiles, error) 
 	return &totalFiles, err
 }
 
-func (connection Connection) LastJob(name string) (*types.LastJob, error) {
-	query := fmt.Sprintf("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE '%s' ORDER BY StartTime DESC LIMIT 1", name)
-
-	results, err := connection.DB.Query(query)
+func (connection Connection) LastJob(server string) (*types.LastJob, error) {
+	results, err := connection.DB.Query("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE ? ORDER BY StartTime DESC LIMIT 1", server)
 
 	if err != nil {
 		return nil, err
@@ -91,10 +89,8 @@ func (connection Connection) LastJob(name string) (*types.LastJob, error) {
 	return &lastJob, err
 }
 
-func (connection Connection) LastFullJob(name string) (*types.LastJob, error) {
-	query := fmt.Sprintf("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE '%s' AND Level = 'F' ORDER BY StartTime DESC LIMIT 1", name)
-
-	results, err := connection.DB.Query(query)
+func (connection Connection) LastFullJob(server string) (*types.LastJob, error) {
+	results, err := connection.DB.Query("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE ? AND Level = 'F' ORDER BY StartTime DESC LIMIT 1", server)
 
 	if err != nil {
 		return nil, err

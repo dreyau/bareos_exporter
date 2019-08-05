@@ -40,10 +40,10 @@ func main() {
 
 	connectionString = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", *mysqlUser, strings.TrimSpace(string(pass)), *mysqlHostname, *mysqlPort, *mysqlDb)
 
-	collector := BareosCollector()
+	collector := bareosCollector()
 	prometheus.MustRegister(collector)
 
 	http.Handle("/metrics", promhttp.Handler())
-	log.Info("Beginning to serve on port :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Info("Beginning to serve on port :9625")
+	log.Fatal(http.ListenAndServe(":9625", nil))
 }
