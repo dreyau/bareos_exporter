@@ -33,19 +33,19 @@ func bareosCollector() *bareosMetrics {
 		),
 		LastJobBytes: prometheus.NewDesc("bareos_last_backup_job_bytes_saved_total",
 			"Total bytes saved during last backup for hostname",
-			[]string{"hostname"}, nil,
+			[]string{"hostname", "level"}, nil,
 		),
 		LastJobFiles: prometheus.NewDesc("bareos_last_backup_job_files_saved_total",
 			"Total files saved during last backup for hostname",
-			[]string{"hostname"}, nil,
+			[]string{"hostname", "level"}, nil,
 		),
 		LastJobErrors: prometheus.NewDesc("bareos_last_backup_job_errors_occurred_while_saving_total",
 			"Total errors occurred during last backup for hostname",
-			[]string{"hostname"}, nil,
+			[]string{"hostname", "level"}, nil,
 		),
 		LastJobTimestamp: prometheus.NewDesc("bareos_last_backup_job_unix_timestamp",
 			"Execution timestamp of last backup for hostname",
-			[]string{"hostname"}, nil,
+			[]string{"hostname", "level"}, nil,
 		),
 		LastFullJobBytes: prometheus.NewDesc("bareos_last_full_backup_job_bytes_saved_total",
 			"Total bytes saved during last full backup (Level = F) for hostname",
@@ -125,10 +125,10 @@ func (collector *bareosMetrics) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(collector.TotalFiles, prometheus.CounterValue, float64(serverFiles.Files), server)
 		ch <- prometheus.MustNewConstMetric(collector.TotalBytes, prometheus.CounterValue, float64(serverBytes.Bytes), server)
 
-		ch <- prometheus.MustNewConstMetric(collector.LastJobBytes, prometheus.CounterValue, float64(lastServerJob.JobBytes), server)
-		ch <- prometheus.MustNewConstMetric(collector.LastJobFiles, prometheus.CounterValue, float64(lastServerJob.JobFiles), server)
-		ch <- prometheus.MustNewConstMetric(collector.LastJobErrors, prometheus.CounterValue, float64(lastServerJob.JobErrors), server)
-		ch <- prometheus.MustNewConstMetric(collector.LastJobTimestamp, prometheus.CounterValue, float64(lastServerJob.JobDate.Unix()), server)
+		ch <- prometheus.MustNewConstMetric(collector.LastJobBytes, prometheus.CounterValue, float64(lastServerJob.JobBytes), server, lastServerJob.Level)
+		ch <- prometheus.MustNewConstMetric(collector.LastJobFiles, prometheus.CounterValue, float64(lastServerJob.JobFiles), server, lastServerJob.Level)
+		ch <- prometheus.MustNewConstMetric(collector.LastJobErrors, prometheus.CounterValue, float64(lastServerJob.JobErrors), server, lastServerJob.Level)
+		ch <- prometheus.MustNewConstMetric(collector.LastJobTimestamp, prometheus.CounterValue, float64(lastServerJob.JobDate.Unix()), server, lastServerJob.Level)
 
 		ch <- prometheus.MustNewConstMetric(collector.LastFullJobBytes, prometheus.CounterValue, float64(lastFullServerJob.JobBytes), server)
 		ch <- prometheus.MustNewConstMetric(collector.LastFullJobFiles, prometheus.CounterValue, float64(lastFullServerJob.JobFiles), server)
