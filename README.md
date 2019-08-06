@@ -1,4 +1,5 @@
 ## bareos_exporter
+[![Go Report Card](https://goreportcard.com/badge/github.com/dreyau/bareos_exporter)](https://goreportcard.com/report/github.com/dreyau/bareos_exporter)
 
 Prometheus exporter for [bareos](https://github.com/bareos) backup job metrics
 

@@ -1,5 +1,6 @@
 package types
 
-type TotalBytes struct {
-	Bytes int `json:"bytes"`
+// TotalFiles models query result of files sum for a server
+type TotalFiles struct {
+	Files int `json:"files"`
 }
