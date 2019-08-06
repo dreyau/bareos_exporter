@@ -6,15 +6,16 @@ import (
 	"time"
 
 	"github.com/dreyau/bareos_exporter/types"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // Keep driver import and usage (in GetConnection) in one file
 )
 
-type Connection struct {
+type connection struct {
 	DB *sql.DB
 }
 
-func GetConnection(connectionString string) (*Connection, error) {
-	var connection Connection
+// GetConnection opens a new db connection
+func GetConnection(connectionString string) (*connection, error) {
+	var connection connection
 	var err error
 
 	connection.DB, err = sql.Open("mysql", connectionString)
@@ -22,7 +23,8 @@ func GetConnection(connectionString string) (*Connection, error) {
 	return &connection, err
 }
 
-func (connection Connection) GetServerList() ([]string, error) {
+// GetServerList reads all servers with scheduled backups for current date
+func (connection connection) GetServerList() ([]string, error) {
 	date := fmt.Sprintf("%s%%", time.Now().Format("2006-01-02"))
 	results, err := connection.DB.Query("SELECT DISTINCT Name FROM job WHERE SchedTime LIKE ?", date)
 
@@ -41,7 +43,8 @@ func (connection Connection) GetServerList() ([]string, error) {
 	return servers, err
 }
 
-func (connection Connection) TotalBytes(server string) (*types.TotalBytes, error) {
+// TotalBytes returns total bytes saved for a server since the very first backup
+func (connection connection) TotalBytes(server string) (*types.TotalBytes, error) {
 	results, err := connection.DB.Query("SELECT SUM(JobBytes) FROM job WHERE Name=?", server)
 
 	if err != nil {
@@ -57,7 +60,8 @@ func (connection Connection) TotalBytes(server string) (*types.TotalBytes, error
 	return &totalBytes, err
 }
 
-func (connection Connection) TotalFiles(server string) (*types.TotalFiles, error) {
+// TotalFiles returns total files saved for a server since the very first backup
+func (connection connection) TotalFiles(server string) (*types.TotalFiles, error) {
 	results, err := connection.DB.Query("SELECT SUM(JobFiles) FROM job WHERE Name=?", server)
 
 	if err != nil {
@@ -73,7 +77,9 @@ func (connection Connection) TotalFiles(server string) (*types.TotalFiles, error
 	return &totalFiles, err
 }
 
-func (connection Connection) LastJob(server string) (*types.LastJob, error) {
+
+// LastJob returns metrics for latest executed server backup
+func (connection connection) LastJob(server string) (*types.LastJob, error) {
 	results, err := connection.DB.Query("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE ? ORDER BY StartTime DESC LIMIT 1", server)
 
 	if err != nil {
@@ -89,7 +95,8 @@ func (connection Connection) LastJob(server string) (*types.LastJob, error) {
 	return &lastJob, err
 }
 
-func (connection Connection) LastFullJob(server string) (*types.LastJob, error) {
+// LastJob returns metrics for latest executed server backup with Level F
+func (connection connection) LastFullJob(server string) (*types.LastJob, error) {
 	results, err := connection.DB.Query("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE ? AND Level = 'F' ORDER BY StartTime DESC LIMIT 1", server)
 
 	if err != nil {

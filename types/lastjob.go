@@ -2,6 +2,7 @@ package types
 
 import "time"
 
+// LastJob models query results for job metrics
 type LastJob struct {
 	Level     string    `json:"level"`
 	JobBytes  int       `json:"job-bytes"`
