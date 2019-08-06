@@ -77,7 +77,6 @@ func (connection connection) TotalFiles(server string) (*types.TotalFiles, error
 	return &totalFiles, err
 }
 
-
 // LastJob returns metrics for latest executed server backup
 func (connection connection) LastJob(server string) (*types.LastJob, error) {
 	results, err := connection.DB.Query("SELECT Level,JobBytes,JobFiles,JobErrors,DATE(StartTime) AS JobDate FROM job WHERE Name LIKE ? ORDER BY StartTime DESC LIMIT 1", server)

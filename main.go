@@ -17,13 +17,13 @@ import (
 var connectionString string
 
 var (
-	exporterPort  	 = flag.Int("port", 9625, "Bareos exporter port")
+	exporterPort     = flag.Int("port", 9625, "Bareos exporter port")
 	exporterEndpoint = flag.String("endpoint", "/metrics", "Bareos exporter endpoint")
 	mysqlUser        = flag.String("u", "root", "Bareos MySQL username")
 	mysqlAuthFile    = flag.String("p", "./auth", "MySQL password file path")
-	mysqlHostname 	 = flag.String("h", "127.0.0.1", "MySQL hostname")
-	mysqlPort     	 = flag.String("P", "3306", "MySQL port")
-	mysqlDb       	 = flag.String("db", "bareos", "MySQL database name")
+	mysqlHostname    = flag.String("h", "127.0.0.1", "MySQL hostname")
+	mysqlPort        = flag.String("P", "3306", "MySQL port")
+	mysqlDb          = flag.String("db", "bareos", "MySQL database name")
 )
 
 func init() {
