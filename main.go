@@ -17,11 +17,13 @@ import (
 var connectionString string
 
 var (
-	mysqlUser     = flag.String("u", "root", "Bareos MySQL username")
-	mysqlAuthFile = flag.String("p", "./auth", "MySQL password file path")
-	mysqlHostname = flag.String("h", "127.0.0.1", "MySQL hostname")
-	mysqlPort     = flag.String("P", "3306", "MySQL port")
-	mysqlDb       = flag.String("db", "bareos", "MySQL database name")
+	exporterPort  	 = flag.Int("port", 9625, "Bareos exporter port")
+	exporterEndpoint = flag.String("endpoint", "/metrics", "Bareos exporter endpoint")
+	mysqlUser        = flag.String("u", "root", "Bareos MySQL username")
+	mysqlAuthFile    = flag.String("p", "./auth", "MySQL password file path")
+	mysqlHostname 	 = flag.String("h", "127.0.0.1", "MySQL hostname")
+	mysqlPort     	 = flag.String("P", "3306", "MySQL port")
+	mysqlDb       	 = flag.String("db", "bareos", "MySQL database name")
 )
 
 func init() {
@@ -43,7 +45,9 @@ func main() {
 	collector := bareosCollector()
 	prometheus.MustRegister(collector)
 
-	http.Handle("/metrics", promhttp.Handler())
-	log.Info("Beginning to serve on port :9625")
-	log.Fatal(http.ListenAndServe(":9625", nil))
+	http.Handle(*exporterEndpoint, promhttp.Handler())
+	log.Info("Beginning to serve on port ", *exporterPort)
+
+	addr := fmt.Sprintf(":%d", *exporterPort)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }
