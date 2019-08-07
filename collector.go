@@ -100,7 +100,7 @@ func (collector *bareosMetrics) Collect(ch chan<- prometheus.Metric) {
 		serverFiles, filesErr := connection.TotalFiles(server)
 		serverBytes, bytesErr := connection.TotalBytes(server)
 		lastServerJob, jobErr := connection.LastJob(server)
-		lastFullServerJob, fullJobErr := connection.LastJob(server)
+		lastFullServerJob, fullJobErr := connection.LastFullJob(server)
 
 		if filesErr != nil || bytesErr != nil || jobErr != nil || fullJobErr != nil {
 			log.Info(server)
