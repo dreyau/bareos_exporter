@@ -8,8 +8,9 @@
 1. Create a file containing your mysql password and mount it inside `/bareos_exporter/pw/auth`
 2. **(optional)** [Overwrite](https://docs.docker.com/engine/reference/run/#env-environment-variables) default args using ENV variables
 3. Run docker image as follows
->`docker run --name bareos_exporter -p 9625:9625 -v /your/password/file:/bareos_exporter/pw/auth -d dreyau/bareos_exporter:latest`
-
+```bash
+docker run --name bareos_exporter -p 9625:9625 -v /your/password/file:/bareos_exporter/pw/auth -d dreyau/bareos_exporter:latest
+```
 ### Metrics
 
 - Total amout of bytes and files saved
