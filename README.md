@@ -4,19 +4,19 @@
 
 ### [`Dockerfile`](https://github.com/dreyau/bareos_exporter/blob/master/Dockerfile)
 
-#### Usage with [docker](https://hub.docker.com/r/dreyau/bareos_exporter)
+### Usage with [docker](https://hub.docker.com/r/dreyau/bareos_exporter)
 1. Create a file containing your mysql password and mount it inside `/bareos_exporter/pw/auth`
 2. **(optional)** [Overwrite](https://docs.docker.com/engine/reference/run/#env-environment-variables) default args using ENV variables
 3. Run docker image as follows
 >`docker run --name bareos_exporter -p 9625:9625 -v /your/password/file:/bareos_exporter/pw/auth -d dreyau/bareos_exporter:latest`
 
-#### Metrics
+### Metrics
 
 - Total amout of bytes and files saved
 - Latest executed job metrics (level, errors, execution time, bytes and files saved)
 - Latest full job (level = F) metrics
 
-#### Flags
+### Flags
 
 Name    | Description                                                                                 | Default
 --------|---------------------------------------------------------------------------------------------|----------------------
