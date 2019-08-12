@@ -2,9 +2,6 @@ package dataaccess
 
 import (
 	"database/sql"
-	"fmt"
-	"time"
-
 	"github.com/dreyau/bareos_exporter/types"
 	_ "github.com/go-sql-driver/mysql" // Keep driver import and usage (in GetConnection) in one file
 )
@@ -25,8 +22,8 @@ func GetConnection(connectionString string) (*connection, error) {
 
 // GetServerList reads all servers with scheduled backups for current date
 func (connection connection) GetServerList() ([]string, error) {
-	date := fmt.Sprintf("%s%%", time.Now().Format("2006-01-02"))
-	results, err := connection.DB.Query("SELECT DISTINCT Name FROM job WHERE SchedTime LIKE ?", date)
+	//date := fmt.Sprintf("%s%%", time.Now().Format("2006-01-02"))
+	results, err := connection.DB.Query("SELECT DISTINCT Name FROM job WHERE SchedTime LIKE '2019-07-24%'")
 
 	if err != nil {
 		return nil, err
@@ -109,4 +106,21 @@ func (connection connection) LastFullJob(server string) (*types.LastJob, error) 
 	}
 
 	return &lastJob, err
+}
+
+// ScheduledTime returns metrics of scheduled jobs
+func (connection connection) ScheduledTime(server string) (*types.ScheduledJob, error) {
+	results, err := connection.DB.Query("SELECT DATE(SchedTime) AS JobSchedDate FROM job WHERE Name LIKE ? AND Level = 'F' ORDER BY JobSchedDate DESC LIMIT 1", server)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var schedJob types.ScheduledJob
+	if results.Next() {
+		err = results.Scan(&schedJob.ScheduledTime)
+		results.Close()
+	}
+
+	return &schedJob, err
 }

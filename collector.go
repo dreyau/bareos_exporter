@@ -19,6 +19,8 @@ type bareosMetrics struct {
 	LastFullJobFiles     *prometheus.Desc
 	LastFullJobErrors    *prometheus.Desc
 	LastFullJobTimestamp *prometheus.Desc
+
+	ScheduledJob    *prometheus.Desc
 }
 
 func bareosCollector() *bareosMetrics {
@@ -63,6 +65,10 @@ func bareosCollector() *bareosMetrics {
 			"Execution timestamp of last full backup (Level = F) for hostname",
 			[]string{"hostname"}, nil,
 		),
+		ScheduledJob: prometheus.NewDesc("bareos_scheduled_job_unix_timestamp",
+			"Probable execution timestamp of next backup for hostname",
+			[]string{"hostname"}, nil,
+		),
 	}
 }
 
@@ -77,6 +83,7 @@ func (collector *bareosMetrics) Describe(ch chan<- *prometheus.Desc) {
 	ch <- collector.LastFullJobFiles
 	ch <- collector.LastFullJobErrors
 	ch <- collector.LastFullJobTimestamp
+	ch <- collector.ScheduledJob
 }
 
 func (collector *bareosMetrics) Collect(ch chan<- prometheus.Metric) {
@@ -101,8 +108,9 @@ func (collector *bareosMetrics) Collect(ch chan<- prometheus.Metric) {
 		serverBytes, bytesErr := connection.TotalBytes(server)
 		lastServerJob, jobErr := connection.LastJob(server)
 		lastFullServerJob, fullJobErr := connection.LastFullJob(server)
+		scheduledJob, scheduledJobErr := connection.ScheduledTime(server)
 
-		if filesErr != nil || bytesErr != nil || jobErr != nil || fullJobErr != nil {
+		if filesErr != nil || bytesErr != nil || jobErr != nil || fullJobErr != nil || scheduledJobErr != nil{
 			log.Info(server)
 		}
 
@@ -122,6 +130,10 @@ func (collector *bareosMetrics) Collect(ch chan<- prometheus.Metric) {
 			log.Error(fullJobErr)
 		}
 
+		if scheduledJobErr != nil {
+			log.Error(scheduledJobErr)
+		}
+
 		ch <- prometheus.MustNewConstMetric(collector.TotalFiles, prometheus.CounterValue, float64(serverFiles.Files), server)
 		ch <- prometheus.MustNewConstMetric(collector.TotalBytes, prometheus.CounterValue, float64(serverBytes.Bytes), server)
 
@@ -134,5 +146,8 @@ func (collector *bareosMetrics) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(collector.LastFullJobFiles, prometheus.CounterValue, float64(lastFullServerJob.JobFiles), server)
 		ch <- prometheus.MustNewConstMetric(collector.LastFullJobErrors, prometheus.CounterValue, float64(lastFullServerJob.JobErrors), server)
 		ch <- prometheus.MustNewConstMetric(collector.LastFullJobTimestamp, prometheus.CounterValue, float64(lastFullServerJob.JobDate.Unix()), server)
+
+
+		ch <- prometheus.MustNewConstMetric(collector.ScheduledJob, prometheus.CounterValue, float64(scheduledJob.ScheduledTime.Unix()), server)
 	}
 }
