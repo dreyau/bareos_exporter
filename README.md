@@ -17,6 +17,7 @@ docker run --name bareos_exporter -p 9625:9625 -v /your/password/file:/bareos_ex
 - Total amout of bytes and files saved
 - Latest executed job metrics (level, errors, execution time, bytes and files saved)
 - Latest full job (level = F) metrics
+- Amount of scheduled jobs
 
 ### Flags
 
