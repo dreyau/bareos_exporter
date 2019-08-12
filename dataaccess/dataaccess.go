@@ -113,7 +113,7 @@ func (connection connection) LastFullJob(server string) (*types.LastJob, error) 
 // ScheduledTime returns amount of scheduled jobs
 func (connection connection) ScheduledJobs(server string) (*types.ScheduledJob, error) {
 	date := fmt.Sprintf("%s%%", time.Now().Format("2006-01-02"))
-	results, err := connection.DB.Query("SELECT COUNT(DATE(SchedTime)) AS JobsScheduled FROM job WHERE Name LIKE ? AND Level = 'F' AND SchedTime >= ?", server, date)
+	results, err := connection.DB.Query("SELECT COUNT(DATE(SchedTime)) AS JobsScheduled FROM job WHERE Name LIKE ? AND SchedTime >= ?", server, date)
 
 	if err != nil {
 		return nil, err
